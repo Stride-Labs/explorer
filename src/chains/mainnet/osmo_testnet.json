@@ -1,0 +1,19 @@
+{
+    "chain_name": "Osmosis Testnet",
+    "coingecko": "osmo",
+    "api": ["http://grpc-test.osmosis.zone/"],
+    "rpc": ["https://rpc-test.osmosis.zone/"],
+    "snapshot_provider": "",
+    "sdk_version": "0.44.3",
+    "coin_type": "118",
+    "min_tx_fee": "800",
+    "addr_prefix": "osmo",
+    "logo": "/logos/osmosis.jpg",
+    "assets": [{
+        "base": "uosmo",
+        "symbol": "OSMO",
+        "exponent": "6",
+        "coingecko_id": "osmo", 
+        "logo": "/logos/osmosis.jpg"
+    }]
+}

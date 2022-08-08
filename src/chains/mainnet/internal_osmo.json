@@ -1,0 +1,19 @@
+{
+    "chain_name": "OSMO",
+    "coingecko": "osmo",
+    "api": ["http://localhost:1117"],
+    "rpc": ["http://localhost:23657"],
+    "snapshot_provider": "",
+    "sdk_version": "0.44.3",
+    "coin_type": "118",
+    "min_tx_fee": "800",
+    "addr_prefix": "osmo",
+    "logo": "/logos/osmosis.jpg",
+    "assets": [{
+        "base": "uosmo",
+        "symbol": "OSMO",
+        "exponent": "6",
+        "coingecko_id": "osmo", 
+        "logo": "/logos/osmosis.jpg"
+    }]
+}
