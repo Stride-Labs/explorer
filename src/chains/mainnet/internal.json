@@ -1,7 +1,7 @@
 {
     "chain_name": "STRIDE",
-    "api": ["https://redbull.poolparty.stridenet.co/"],
-    "rpc": ["https://redbull.poolparty.stridenet.co:445"],
+    "api": ["https://stride-library.poolparty.stridenet.co/api"],
+    "rpc": ["https://stride-library.poolparty.stridenet.co"],
     "snapshot_provider": "",
     "sdk_version": "0.45.4",
     "coin_type": "118",
