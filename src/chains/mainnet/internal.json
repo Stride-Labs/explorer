@@ -1,7 +1,7 @@
 {
     "chain_name": "STRIDE",
-    "api": ["https://stride-api.polkachu.com/"],
-    "rpc": ["https://stride-rpc.polkachu.com/"],
+    "api": ["https://stride-api.polkachu.com"],
+    "rpc": ["https://stride-rpc.polkachu.com"],
     "snapshot_provider": "",
     "sdk_version": "0.45.4",
     "coin_type": "118",
