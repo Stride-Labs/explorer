@@ -430,8 +430,8 @@ import {
   toDuration, abbrMessage, abbrAddress, getUserCurrency, getUserCurrencySign, numberWithCommas, toETHAddress,
 } from '@/libs/utils'
 import OperationModal from '@/views/components/OperationModal/index.vue'
-import ObjectFieldComponent from './ObjectFieldComponent.vue'
-import ChartComponentDoughnut from './ChartComponentDoughnut.vue'
+import ObjectFieldComponent from './components/ObjectFieldComponent.vue'
+import ChartComponentDoughnut from './components/charts/ChartComponentDoughnut.vue'
 
 export default {
   components: {
@@ -651,7 +651,7 @@ export default {
   },
   created() {
     this.$http.getAuthAccount(this.address).then(acc => {
-      this.account = acc
+      this.account = acc.account
       this.initial()
       this.$http.getTxsBySender(this.address).then(res => {
         this.transactions = res

@@ -200,7 +200,6 @@
                           </div>
                         </div>
                         <b-button
-                          v-if="balances[acc.addr]"
                           block
                           size="sm"
                           variant="outline-primary"
@@ -251,7 +250,7 @@ import ToastificationContent from '@core/components/toastification/Toastificatio
 import AppCollapse from '@core/components/app-collapse/AppCollapse.vue'
 import AppCollapseItem from '@core/components/app-collapse/AppCollapseItem.vue'
 import OperationModal from '@/views/components/OperationModal/index.vue'
-import ChartComponentDoughnut from './ChartComponentDoughnut.vue'
+import ChartComponentDoughnut from './components/charts/ChartComponentDoughnut.vue'
 import EchartScatter from './components/charts/EchartScatter.vue'
 
 export default {
@@ -452,9 +451,10 @@ export default {
         Object.keys(this.accounts).forEach(acc => {
           this.accounts[acc].address.forEach(add => {
             this.$http.getBankBalances(add.addr, chains[add.chain]).then(res => {
-              if (res && res.length > 0) {
-                this.$set(this.balances, add.addr, res)
-                res.forEach(token => {
+              const { balances } = res
+              if (balances && balances.length > 0) {
+                this.$set(this.balances, add.addr, balances)
+                balances.forEach(token => {
                   if (token.denom.startsWith('ibc')) {
                     this.$http.getIBCDenomTrace(token.denom, chains[add.chain]).then(denom => {
                       this.$set(this.ibcDenom, token.denom, denom)

@@ -1,5 +1,5 @@
 import {
-  Bech32, fromBase64, fromBech32, fromHex, toBech32, toHex,
+  Bech32, fromBase64, fromBech32, fromHex, toBase64, toBech32, toHex,
 } from '@cosmjs/encoding'
 import { sha256, stringToPath } from '@cosmjs/crypto'
 // ledger
@@ -12,18 +12,40 @@ import { ethToEvmos } from '@tharsis/address-converter'
 import dayjs from 'dayjs'
 import duration from 'dayjs/plugin/duration'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import updateLocale from 'dayjs/plugin/updateLocale'
 import utc from 'dayjs/plugin/utc'
 import RIPEMD160 from 'ripemd160'
 import localeData from 'dayjs/plugin/localeData'
 import { $themeColors } from '@themeConfig'
 // import { SigningStargateClient } from '@cosmjs/stargate'
-import PingWalletClient from './data/signing'
-import { EthereumLedgerSigner } from './client/EthereumLedgerSigner.ts'
+// import PingWalletClient from './data/signing'
+import { SigningStargateClient } from '@cosmjs/stargate'
+import { getSigningClient } from './client/SigningEthermintClient.ts'
+import EthereumLedgerSigner from './client/EthereumLedgerSigner.ts'
+import SigningKeplerEthermintClient from './client/SigningKeplrEthermintClient'
 
 dayjs.extend(localeData)
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
+dayjs.extend(updateLocale)
 dayjs.extend(utc)
+dayjs.updateLocale('en', {
+  relativeTime: {
+    future: 'in %s',
+    past: '%s ago',
+    s: '%ds',
+    m: '1m',
+    mm: '%dm',
+    h: 'an hour',
+    hh: '%d hours',
+    d: 'a day',
+    dd: '%d days',
+    M: 'a month',
+    MM: '%d months',
+    y: 'a year',
+    yy: '%d years',
+  },
+})
 
 export function getLocalObject(name) {
   const text = localStorage.getItem(name)
@@ -135,11 +157,11 @@ export function chartColors() {
 }
 
 export function extractAccountNumberAndSequence(ret) {
-  let account = ret.value
-  if (ret.value && ret.value.base_vesting_account) { // vesting account
-    account = ret.value.base_vesting_account?.base_account
-  } else if (ret.value && ret.value.base_account) { // evmos based account
-    account = ret.value.base_account
+  let { account } = ret
+  if (account && account.base_vesting_account) { // vesting account
+    account = account.base_vesting_account?.base_account
+  } else if (account && account.base_account) { // evmos based account
+    account = account.base_account
   }
   const accountNumber = account.account_number
   const sequence = account?.sequence || 0
@@ -172,6 +194,15 @@ export function getUserCurrencySign() {
 export function consensusPubkeyToHexAddress(consensusPubkey) {
   let raw = null
   if (typeof consensusPubkey === 'object') {
+    if (consensusPubkey['@type'] === '/cosmos.crypto.ed25519.PubKey') {
+      raw = toBase64(fromHex(toHex(sha256(fromBase64(consensusPubkey.key))).slice(0, 40)))
+      return raw
+    }
+    // /cosmos.crypto.secp256k1.PubKey
+    if (consensusPubkey['@type'] === '/cosmos.crypto.secp256k1.PubKey') {
+      raw = toBase64(fromHex(new RIPEMD160().update(Buffer.from(sha256(fromBase64(consensusPubkey.key)))).digest('hex')))
+      return raw
+    }
     if (consensusPubkey.type === 'tendermint/PubKeySecp256k1') {
       raw = new RIPEMD160().update(Buffer.from(sha256(fromBase64(consensusPubkey.value)))).digest('hex').toUpperCase()
       return raw
@@ -201,6 +232,34 @@ function getHdPath(address) {
   return stringToPath(hdPath)
 }
 
+function isEvmosBasedChain(chainId) {
+  const re = /[_]{1}[\d]{4}[\\-]{1}[\d]+$/g
+  return re.test(chainId)
+}
+
+export async function sign(device, chainId, signerAddress, messages, fee, memo, signerData) {
+  const hdpath = getHdPath(signerAddress)
+  let client
+  if (device.startsWith('ledger')) {
+    client = await getSigningClient(device, hdpath)
+  } else {
+    if (!window.getOfflineSigner || !window.keplr) {
+      throw new Error('Please install keplr extension')
+    }
+    await window.keplr.enable(chainId)
+    const signer = window.getOfflineSigner(chainId)
+    if (isEvmosBasedChain(chainId)) {
+      client = await SigningKeplerEthermintClient.offline(signer)
+    } else {
+      client = await SigningStargateClient.offline(signer)
+    }
+  }
+  const coinType = Number(hdpath[1])
+  const addr = device.startsWith('ledger') && coinType !== 60 ? toSignAddress(signerAddress) : signerAddress
+  return client.sign(addr, messages, fee, memo, signerData)
+}
+
+// import address from ledger
 async function getLedgerAppName(coinType, device, hdpath) {
   let ledgerAppName = 'Cosmos'
   switch (coinType) {
@@ -212,6 +271,9 @@ async function getLedgerAppName(coinType, device, hdpath) {
     case 852:
       ledgerAppName = 'Desmos' // 'Desmos'
       break
+    case 330:
+      ledgerAppName = 'Terra' // 'Terra'
+      break
     case 118:
     default:
   }
@@ -219,49 +281,14 @@ async function getLedgerAppName(coinType, device, hdpath) {
   return new LedgerSigner(transport, { hdPaths: [hdpath], ledgerAppName })
 }
 
-export async function sign(device, chainId, signerAddress, messages, fee, memo, signerData) {
-  // let transport
-  let signer
-  const hdpath = getHdPath(signerAddress)
-  const coinType = Number(hdpath[1])
-  // const ledgerName = getLedgerAppName(coinType)
-  switch (device) {
-    case 'ledgerBle':
-    // transport = await TransportWebBLE.create()
-    // signer = new LedgerSigner(transport, { hdPaths: [hdpath], ledgerAppName: ledgerName })
-      signer = await getLedgerAppName(coinType, device, hdpath)
-      break
-    case 'ledgerUSB':
-      // transport = await TransportWebUSB.create()
-      // signer = new LedgerSigner(transport, { hdPaths: [hdpath], ledgerAppName: ledgerName })
-      signer = await getLedgerAppName(coinType, device, hdpath)
-      break
-    case 'keplr':
-    default:
-      if (!window.getOfflineSigner || !window.keplr) {
-        throw new Error('Please install keplr extension')
-      }
-      await window.keplr.enable(chainId)
-      // signer = window.getOfflineSigner(chainId)
-      signer = window.getOfflineSignerOnlyAmino(chainId)
-  }
-
-  // Ensure the address has some tokens to spend
-  const client = await PingWalletClient.offline(signer)
-  // const client = await SigningStargateClient.offline(signer)
-  return client.signAmino2(device.startsWith('ledger') ? toSignAddress(signerAddress) : signerAddress, messages, fee, memo, signerData)
-  // return signDirect(signer, signerAddress, messages, fee, memo, signerData)
-}
-
 export async function getLedgerAddress(transport = 'blu', hdPath = "m/44'/118/0'/0/0") {
   const protocol = transport === 'usb' ? await TransportWebUSB.create() : await TransportWebBLE.create()
   // extract Cointype from from HDPath
   const coinType = Number(stringToPath(hdPath)[1])
-  // const ledgerName = getLedgerAppName(coinType)
-  // const signer = new LedgerSigner(trans, { hdPaths: [stringToPath(hdPath)], ledgerAppName: ledgerName })
-  const signer = await getLedgerAppName(coinType, protocol, hdPath)
+  const signer = await getLedgerAppName(coinType, protocol, stringToPath(hdPath))
   return signer.getAccounts()
 }
+/// end import address from ledger
 
 export function toDuration(value) {
   return dayjs.duration(value).humanize()
@@ -361,14 +388,21 @@ export function isToken(value) {
 export function formatTokenDenom(tokenDenom) {
   if (tokenDenom && tokenDenom.code === undefined) {
     let denom = tokenDenom.denom_trace ? tokenDenom.denom_trace.base_denom : tokenDenom
-    const config = Object.values(getLocalChains())
-
-    config.forEach(x => {
-      if (x.assets) {
-        const asset = x.assets.find(a => (a.base === denom))
-        if (asset) denom = asset.symbol
-      }
-    })
+    const chains = getLocalChains()
+    const selected = localStorage.getItem('selected_chain')
+    const selChain = chains[selected]
+    const nativeAsset = selChain.assets.find(a => (a.base === denom))
+    if (nativeAsset) {
+      denom = nativeAsset.symbol
+    } else {
+      const config = Object.values(chains)
+      config.forEach(x => {
+        if (x.assets) {
+          const asset = x.assets.find(a => (a.base === denom))
+          if (asset) denom = asset.symbol
+        }
+      })
+    }
     return denom.length > 10 ? `${denom.substring(0, 7).toUpperCase()}..${denom.substring(denom.length - 3)}` : denom.toUpperCase()
   }
   return ''
@@ -442,9 +476,9 @@ export function formatNumber(count, withAbbr = false, decimals = 2) {
   return result
 }
 
-export function tokenFormatter(tokens, denoms = {}) {
+export function tokenFormatter(tokens, denoms = {}, decimal = 2) {
   if (Array.isArray(tokens)) {
-    return tokens.map(t => formatToken(t, denoms, 2)).join(', ')
+    return tokens.map(t => formatToken(t, denoms, decimal)).join(', ')
   }
   return formatToken(tokens, denoms, 2)
 }
