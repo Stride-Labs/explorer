@@ -1,0 +1,19 @@
+{
+    "chain_name": "evmos_9001-2",
+    "coingecko": "evmos",
+    "api": ["http://localhost:1267"],
+    "rpc": ["http://localhost:26157"],
+    "snapshot_provider": "",
+    "sdk_version": "0.44.3",
+    "coin_type": "118",
+    "min_tx_fee": "800",
+    "addr_prefix": "cosmos",
+    "logo": "/logos/cosmos.svg",
+    "assets": [{
+        "base": "aevmos",
+        "symbol": "EVMOS",
+        "exponent": "18",
+        "coingecko_id": "evmos", 
+        "logo": "/logos/evmos.svg"
+    }]
+}

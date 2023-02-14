@@ -1,5 +1,5 @@
 {
-    "chain_name": "stride",
+    "chain_name": "stride_mainnet",
     "api": ["https://stride-api.polkachu.com"],
     "rpc": ["https://stride-rpc.polkachu.com:443"],
     "snapshot_provider": "",

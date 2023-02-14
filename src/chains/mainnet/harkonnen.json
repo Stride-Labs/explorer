@@ -1,0 +1,19 @@
+
+{
+    "chain_name": "harkonnen-1",
+    "api": ["http://54.205.15.49:1317"],
+    "rpc": ["http://54.205.15.49:26657"],
+    "snapshot_provider": "",
+    "sdk_version": "0.46.1",
+    "coin_type": "118",
+    "min_tx_fee": "0",
+    "assets": [{
+        "base": "uhar",
+        "symbol": "HAR",
+        "exponent": "6",
+        "coingecko_id": "",
+        "logo": ""
+    }],
+    "addr_prefix": "harkonnen",
+    "logo": "/logos/stride.png"
+}	
