@@ -1,9 +1,9 @@
 {
     "chain_name": "stride",
-    "api": ["https://stride-api.polkachu.com"],
-    "rpc": ["https://stride-rpc.polkachu.com:443"],
+    "api": ["https://stride-validator.testnet-2.stridenet.co/api"],
+    "rpc": ["https://stride-validator.testnet-2.stridenet.co:443"],
     "snapshot_provider": "",
-    "sdk_version": "0.45.5",
+    "sdk_version": "0.47.0",
     "coin_type": "118",
     "min_tx_fee": "800",
     "addr_prefix": "stride",
