@@ -1,0 +1,18 @@
+{
+    "chain_name": "stride-testnet-1",
+    "api": ["https://stride.testnet-1.stridenet.co/api/"],
+    "rpc": ["https://stride.testnet-1.stridenet.co/"],
+    "snapshot_provider": "",
+    "sdk_version": "0.46.4",
+    "coin_type": "118",
+    "min_tx_fee": "0",
+    "assets": [{
+        "base": "ustrd",
+        "symbol": "STRD",
+        "exponent": "6",
+        "coingecko_id": "",
+        "logo": ""
+    }],
+    "addr_prefix": "stride",
+    "logo": "/logos/stride.png"
+}	
